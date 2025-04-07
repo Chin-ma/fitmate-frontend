@@ -37,16 +37,16 @@ const bodyTypes = [
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string().email('Please enter a valid email'),
-  age: z.string().min(1, 'Age is required'),
-  height: z.string().min(1, 'Height is required'),
-  weight: z.string().min(1, 'Weight is required'),
+  age: z.coerce.number().min(1, 'Age is required'),
+  height: z.coerce.number().min(1, 'Height is required'),
+  weight: z.coerce.number().min(1, 'Weight is required'),
   body_type: z.enum(['ectomorph', 'mesomorph', 'endomorph']),
   goal: z.enum(['weight_loss', 'bulk', 'fit_body']),
   meal_pref: z.enum(['vegetarian', 'non_vegetarian', 'vegan']),
   allergies: z.array(z.string()),
   exercise: z.enum(['beginner', 'intermediate', 'advanced']),
-  push_up: z.string().optional(),
-  pull_up: z.string().optional()
+  push_up: z.coerce.number().optional(),
+  pull_up: z.coerce.number().optional()
 });
 
 export function OnboardingForm() {
@@ -59,16 +59,16 @@ export function OnboardingForm() {
     defaultValues: {
       name: '',
       email: '',
-      age: '',
-      height: '',
-      weight: '',
+      age: 1,
+      height: 0,
+      weight: 0,
       body_type: 'mesomorph',
       goal: 'fit_body',
       meal_pref: 'non_vegetarian',
       allergies: [],
       exercise: 'beginner',
-      push_up: '',
-      pull_up: ''
+      push_up: 0,
+      pull_up: 0
     }
   });
 
@@ -111,9 +111,9 @@ export function OnboardingForm() {
     setShowFitnessTest(['intermediate', 'advanced'].includes(exercise));
   }, [exercise]);
 
-  const calculateBMI = (height: string, weight: string) => {
-    const heightInMeters = parseFloat(height) / 100;
-    const weightInKg = parseFloat(weight);
+  const calculateBMI = (height: number | string, weight: number | string) => {
+    const heightInMeters = Number(height) / 100;
+    const weightInKg = Number(weight);
     if (heightInMeters > 0 && weightInKg > 0) {
       const bmi = weightInKg / (heightInMeters * heightInMeters);
       setBmi(Math.round(bmi * 10) / 10);
@@ -137,8 +137,8 @@ export function OnboardingForm() {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     // Calculate BMI before sending data
-    const heightInMeters = parseFloat(values.height) / 100;
-    const weightInKg = parseFloat(values.weight);
+    const heightInMeters = values.height / 100;
+    const weightInKg = values.weight;
     const calculatedBMI = weightInKg / (heightInMeters * heightInMeters);
     const roundedBMI = Math.round(calculatedBMI * 10) / 10;
 
@@ -278,7 +278,7 @@ export function OnboardingForm() {
                             className="h-10"
                             {...field}
                             onChange={(e) => {
-                              field.onChange(e);
+                              field.onChange(Number(e.target.value));
                               calculateBMI(e.target.value, form.getValues('weight'));
                             }}
                           />
@@ -300,7 +300,7 @@ export function OnboardingForm() {
                             className="h-10"
                             {...field}
                             onChange={(e) => {
-                              field.onChange(e);
+                              field.onChange(Number(e.target.value));
                               calculateBMI(form.getValues('height'), e.target.value);
                             }}
                           />

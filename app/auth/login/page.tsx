@@ -10,11 +10,13 @@ import { useRouter } from 'next/navigation';
 
 interface UserData {
   email: string;
+  uid: string;
 }
 
 export default function LoginPage() {
   const [userData, setUserData] = useState<UserData>({
-    email: ''
+    email: '',
+    uid: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
