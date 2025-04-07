@@ -1,0 +1,228 @@
+[{
+  "_id": {
+    "$oid": "67f42c2702dd9cabca2ef5ff"
+  },
+  "main_name": "biceps",
+  "subtype": [
+    {
+      "barbell pull": "67f42c4f02dd9cabca2ef600"
+    },
+    {
+      "Dumbbell Bicep Curl  ": "67f42ca402dd9cabca2ef601"
+    },
+    {
+      "Preacher Curls": "67f42ce302dd9cabca2ef602"
+    },
+    {
+      "Hammer Curls": "67f42cfc02dd9cabca2ef603"
+    },
+    {
+      "Concentration Curls": "67f42d1702dd9cabca2ef604"
+    },
+    {
+      "Cable Curls": "67f42d2e02dd9cabca2ef605"
+    },
+    {
+      "Incline Dumbbell Curls": "67f42d5402dd9cabca2ef606"
+    },
+    {
+      "Zottman Curls": "67f42d6d02dd9cabca2ef607"
+    },
+    {
+      "EZ-Bar Curls": "67f42d8a02dd9cabca2ef608"
+    },
+    {
+      "Spider Curls": "67f42d9e02dd9cabca2ef609"
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "67f42dd802dd9cabca2ef60a"
+  },
+  "main_name": "back",
+  "subtype": [
+    {
+      "Pull Ups": "67f42e0a02dd9cabca2ef60b"
+    },
+    {
+      "Lat Pulldown": "67f42e3a02dd9cabca2ef60c"
+    },
+    {
+      "Barbell Deadlift": "67f42e6102dd9cabca2ef60d"
+    },
+    {
+      "Dumbbell Rows": "67f42e7c02dd9cabca2ef60e"
+    },
+    {
+      "Seated Cable Rows": "67f42e9102dd9cabca2ef60f"
+    },
+    {
+      "T-Bar Rows": "67f42ea502dd9cabca2ef610"
+    },
+    {
+      "Rack Pulls": "67f42f2a02dd9cabca2ef611"
+    },
+    {
+      "Inverted Rows": "67f42f7b02dd9cabca2ef612"
+    },
+    {
+      "Machine Back extension": "67f42fa302dd9cabca2ef613"
+    },
+    {
+      "Chin Ups": "67f42fbe02dd9cabca2ef614"
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "67f42fd502dd9cabca2ef615"
+  },
+  "main_name": "chest",
+  "subtype": [
+    {
+      "Barbell Bench Press": "67f4302f02dd9cabca2ef616"
+    },
+    {
+      "Dumbbell Bench Press": "67f4305f96daf728451e87dc"
+    },
+    {
+      "Incline bench press ": "67f4309496daf728451e87dd"
+    },
+    {
+      "Decline bench press ": "67f430b296daf728451e87de"
+    },
+    {
+      "Chest Flys": "67f430d796daf728451e87df"
+    },
+    {
+      "Push-ups": "67f430ec96daf728451e87e0"
+    },
+    {
+      "Chest dips": "67f4310b96daf728451e87e1"
+    },
+    {
+      "Cable crossover": "67f4314696daf728451e87e2"
+    },
+    {
+      "Smith Machine Brench Press": "67f4316396daf728451e87e3"
+    },
+    {
+      "Pec Deck Machine": "67f431e796daf728451e87e4"
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "67f431fe96daf728451e87e5"
+  },
+  "main_name": "shoulder",
+  "subtype": [
+    {
+      "Overhead Barbell Press": "67f4322896daf728451e87e6"
+    },
+    {
+      "Dumbbell Shoulder Press": "67f4325196daf728451e87e7"
+    },
+    {
+      "Arnold Press": "67f4384996daf728451e87e8"
+    },
+    {
+      "Lateral Raises": "67f4388396daf728451e87e9"
+    },
+    {
+      "Front Raises": "67f4389e96daf728451e87ea"
+    },
+    {
+      "Rear Delt Flys": "67f438bc96daf728451e87eb"
+    },
+    {
+      "Upright Rows": "67f438d196daf728451e87ec"
+    },
+    {
+      "Face Pulls": "67f438e596daf728451e87ed"
+    },
+    {
+      "Cable Lateral Raise": "67f438fe96daf728451e87ee"
+    },
+    {
+      "Machine Shoulder Press": "67f4391696daf728451e87ef"
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "67f4393296daf728451e87f0"
+  },
+  "main_name": "leg",
+  "subtype": [
+    {
+      "Barbell Squats": "67f4395a96daf728451e87f1"
+    },
+    {
+      "Leg Press": "67f4397396daf728451e87f2"
+    },
+    {
+      "Lunges": "67f4398a96daf728451e87f3"
+    },
+    {
+      "Deadlifts": "67f439a096daf728451e87f4"
+    },
+    {
+      "Leg Extensions": "67f439b096daf728451e87f5"
+    },
+    {
+      "Hamstring Curls": "67f439c596daf728451e87f6"
+    },
+    {
+      "Bulgarian Split Squats": "67f439da96daf728451e87f7"
+    },
+    {
+      "Calf Raises": "67f43a0096daf728451e87f8"
+    },
+    {
+      "Goblet Squats": "67f43a1496daf728451e87f9"
+    },
+    {
+      "Glute Bridges": "67f43a2596daf728451e87fa"
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "67f43a3c96daf728451e87fb"
+  },
+  "main_name": "triceps",
+  "subtype": [
+    {
+      "Triceps Dips": "67f43a6296daf728451e87fc"
+    },
+    {
+      "Skull Crushers": "67f43a7c96daf728451e87fd"
+    },
+    {
+      "Triceps Pushdowns": "67f43a9196daf728451e87fe"
+    },
+    {
+      "Overhead Dumbbell Triceps Extensions": "67f43aad96daf728451e87ff"
+    },
+    {
+      "Close-Grip Bench Press": "67f43acd96daf728451e8800"
+    },
+    {
+      "Kickbacks": "67f43adf96daf728451e8801"
+    },
+    {
+      "Rope Pushdowns": "67f43af396daf728451e8802"
+    },
+    {
+      "Diamond Push-Ups": "67f43b1196daf728451e8803"
+    },
+    {
+      "Machine Triceps Extensions": "67f43b2596daf728451e8804"
+    },
+    {
+      "EZ Bar Overhead Extensions": "67f43b3c96daf728451e8805"
+    }
+  ]
+}]

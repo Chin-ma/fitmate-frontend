@@ -1,32 +1,181 @@
+"use client"
+
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Camera } from 'lucide-react';
+import { Camera, Activity, Apple, Dumbbell, Calendar, CheckCircle2, XCircle } from 'lucide-react';
+import Image from 'next/image';
+import { PostureCheck } from '@/components/posture-check/posture-check';
+import { toast } from '@/components/ui/use-toast';
+
+// Interface for the daily metrics
+interface DailyMetric {
+  workout_completed: boolean;
+  total_calories: number;
+  calorie_target: number;
+  date: string;
+}
 
 export default function DashboardPage() {
+  const [userId, setUserId] = useState<string | null>(null);
+  const [dailyMetrics, setDailyMetrics] = useState<DailyMetric | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Get user ID and fetch data on component mount
+  useEffect(() => {
+    // Get user ID
+    const userEmail = localStorage.getItem('userEmail');
+    if (userEmail) {
+      setUserId(userEmail);
+    } else {
+      const storedUserId = localStorage.getItem('userId');
+      if (storedUserId) {
+        setUserId(storedUserId);
+      }
+    }
+  }, []);
+
+  // Fetch daily metrics when userId changes
+  useEffect(() => {
+    if (userId) {
+      fetchDailyMetrics();
+    }
+  }, [userId]);
+
+  // Function to fetch daily metrics from the backend
+  const fetchDailyMetrics = async () => {
+    if (!userId) return;
+    
+    setIsLoading(true);
+    
+    try {
+      const currentDate = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+      
+      const response = await fetch(`http://127.0.0.1:5000/api/daily/metrics?uid=${userId}&date=${currentDate}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch daily metrics');
+      }
+      
+      const data = await response.json();
+      
+      // Set metrics from backend or use default values
+      setDailyMetrics({
+        workout_completed: data.workout_completed || false,
+        total_calories: data.total_calories || 0,
+        calorie_target: data.calorie_target || 2200,
+        date: currentDate
+      });
+      
+    } catch (error) {
+      console.error('Error fetching daily metrics:', error);
+      
+      // Set default data if fetch fails
+      setDailyMetrics({
+        workout_completed: false,
+        total_calories: 0,
+        calorie_target: 2200,
+        date: new Date().toISOString().split('T')[0]
+      });
+      
+      toast({
+        title: "Error loading metrics",
+        description: "Could not load today's fitness data. Using default values.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header with Quick Actions */}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <div className="flex gap-4">
-          <Button variant="outline">Update Progress</Button>
+          <Button variant="outline" onClick={fetchDailyMetrics} disabled={isLoading}>
+            {isLoading ? "Updating..." : "Refresh Data"}
+          </Button>
           <Button>Start Workout</Button>
         </div>
       </div>
+
+      {/* Daily Status Overview */}
+      {dailyMetrics && (
+        <Card className="bg-muted/40">
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-full ${dailyMetrics.workout_completed ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>
+                  {dailyMetrics.workout_completed ? 
+                    <CheckCircle2 className="w-6 h-6" /> : 
+                    <XCircle className="w-6 h-6" />
+                  }
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Today's Workout</p>
+                  <p className="font-semibold">
+                    {dailyMetrics.workout_completed ? 
+                      "Completed" : 
+                      "Not yet completed"
+                    }
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-blue-100 text-blue-600">
+                  <Apple className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Calorie Intake</p>
+                  <p className="font-semibold">
+                    {dailyMetrics.total_calories} / {dailyMetrics.calorie_target} calories
+                  </p>
+                </div>
+                <div className="w-24 md:w-32">
+                  <Progress 
+                    value={(dailyMetrics.total_calories / dailyMetrics.calorie_target) * 100} 
+                    className="h-2"
+                  />
+                </div>
+              </div>
+              
+              <div className="text-right">
+                <p className="text-sm font-medium text-muted-foreground">Today's Date</p>
+                <p className="font-semibold">
+                  {new Date().toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric'
+                  })}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <SummaryCard 
           title="Daily Calories" 
-          value="1,850 / 2,200" 
+          value={dailyMetrics ? `${dailyMetrics.total_calories} / ${dailyMetrics.calorie_target}` : "- / -"} 
           icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>}
         />
         <SummaryCard 
           title="Workout Streak" 
           value="5 days" 
           icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M6 16.326A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 .5 8.973" /><path d="m13 12-3 5h4l-3 5" /></svg>}
+        />
+        <SummaryCard 
+          title="Today's Workout" 
+          value={dailyMetrics ? (dailyMetrics.workout_completed ? "Completed" : "Not Started") : "Unknown"}
+          icon={<Dumbbell className="w-5 h-5" />}
         />
         <SummaryCard 
           title="Weekly Goal" 
@@ -104,6 +253,77 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
+                {/* Today's Workout Status */}
+                <div className="p-4 rounded-lg border">
+                  <h3 className="font-medium mb-3">Today's Workout Status</h3>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {dailyMetrics?.workout_completed ? (
+                        <>
+                          <CheckCircle2 className="text-green-500 h-5 w-5" />
+                          <span className="text-green-600 font-medium">Workout Completed</span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="text-orange-500 h-5 w-5" />
+                          <span className="text-orange-600 font-medium">Workout Not Completed</span>
+                        </>
+                      )}
+                    </div>
+                    {!dailyMetrics?.workout_completed && (
+                      <Button 
+                        size="sm" 
+                        onClick={async () => {
+                          if (!userId) {
+                            toast({
+                              title: "User Data Error",
+                              description: "Unable to identify user. Please refresh the page.",
+                              variant: "destructive"
+                            });
+                            return;
+                          }
+                          
+                          try {
+                            const response = await fetch('http://127.0.0.1:5000/api/daily/update_workout', {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                              },
+                              body: JSON.stringify({
+                                uid: userId,
+                                date: new Date().toISOString().split('T')[0],
+                                workout_completed: true
+                              }),
+                            });
+                            
+                            if (!response.ok) {
+                              throw new Error('Failed to update workout status');
+                            }
+                            
+                            toast({
+                              title: "Workout Completed",
+                              description: "Your workout has been marked as completed for today!",
+                            });
+                            
+                            // Refresh the data
+                            fetchDailyMetrics();
+                            
+                          } catch (error) {
+                            console.error('Error updating workout status:', error);
+                            toast({
+                              title: "Update Failed",
+                              description: "There was a problem updating your workout status.",
+                              variant: "destructive"
+                            });
+                          }
+                        }}
+                      >
+                        Mark as Completed
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="font-medium">Weight Goal</span>
@@ -144,10 +364,17 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-lg font-semibold">Daily Target: 2,200 cal</p>
-                    <p className="text-sm text-muted-foreground">Consumed: 1,850 cal</p>
+                    <p className="text-lg font-semibold">
+                      Daily Target: {dailyMetrics ? dailyMetrics.calorie_target : 2200} cal
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Consumed: {dailyMetrics ? dailyMetrics.total_calories : 0} cal
+                    </p>
                   </div>
-                  <Progress value={84} className="w-1/2 h-2" />
+                  <Progress 
+                    value={dailyMetrics ? (dailyMetrics.total_calories / dailyMetrics.calorie_target) * 100 : 0} 
+                    className="w-1/2 h-2" 
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <MacroCard title="Protein" value="120g" target="140g" />
@@ -197,13 +424,7 @@ export default function DashboardPage() {
               <CardDescription>AI-powered posture assessment</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
-                  <Camera className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">Take or upload a photo for posture analysis</p>
-                </div>
-                <Button className="w-full">Start Posture Check</Button>
-              </div>
+              <PostureCheck />
             </CardContent>
           </Card>
         </TabsContent>
