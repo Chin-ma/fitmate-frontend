@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FitMate AI - Personal Fitness Coach
+
+FitMate AI is a personalized AI fitness coaching platform that creates custom workout plans based on user health metrics, adapts dynamically with user progress, and supports diverse fitness goals.
+
+## Features
+
+- 🧠 **AI-Powered Workout Plans**: Generate personalized workout routines based on your goals, fitness level, and preferences
+- 🔄 **Dynamic Plan Adaptation**: Workout plans adapt based on your progress, feedback, and performance
+- 🏋️‍♀️ **Multiple Fitness Goals**: Support for weight loss, muscle gain, endurance, and flexibility training
+- 💬 **AI Coach**: Chat interface for continuous interaction, recommendations, and plan tweaks
+
+## Tech Stack
+
+- **Frontend**: Next.js with TypeScript and Tailwind CSS
+- **UI Components**: shadcn/ui
+- **Backend**: Python (Flask) - Coming soon
+- **AI/ML Engine**: Google Gemini - Coming soon
+- **Database**: MongoDB - Coming soon
+- **Authentication**: JWT Email authentication - Coming soon
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+ 
+- npm or yarn
+
+### Installation
+
+1. Clone the repository
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/your-username/fitmate-ai.git
+cd fitmate-ai
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Run the development server
+```bash
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+fitmate-ai/
+├── app/                    # Next.js app directory
+│   ├── auth/               # Authentication routes
+│   ├── dashboard/          # Dashboard routes
+│   └── api/                # API routes
+├── components/             # React components
+│   ├── ui/                 # UI components from shadcn
+│   ├── dashboard/          # Dashboard components
+│   ├── onboarding/         # Onboarding flow components
+│   └── workout/            # Workout-related components
+├── lib/                    # Utility functions and hooks
+├── public/                 # Static assets
+└── styles/                 # Global styles
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Current Status
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+This project is in development stage with the frontend MVP in progress.
 
-## Deploy on Vercel
+## Roadmap
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Backend API integration
+- AI model integration
+- Data persistence
+- Authentication system
+- User profile management
+- Progress tracking and analytics
+- Mobile responsiveness optimization
+- Wearable device integration
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
