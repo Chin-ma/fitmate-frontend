@@ -10,13 +10,13 @@ import { useRouter } from 'next/navigation';
 
 interface UserData {
   email: string;
-  uid: string;
+  user_id: string;
 }
 
 export default function LoginPage() {
   const [userData, setUserData] = useState<UserData>({
     email: '',
-    uid: ''
+    user_id: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -41,8 +41,10 @@ export default function LoginPage() {
 
       // If login successful, redirect to onboarding or dashboard
       const responseData = await response.json();
-      // Store email in localStorage for use in other components
+      // Store email and user_id in localStorage for use in other components
       localStorage.setItem('userEmail', userData.email);
+      localStorage.setItem('userId', responseData.user_id);
+      console.log('User ID saved:', responseData.user_id);
       
       router.push('/dashboard/onboarding');
     } catch (error) {

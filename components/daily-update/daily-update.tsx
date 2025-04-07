@@ -48,45 +48,29 @@ export function DailyUpdate() {
 
   // Initialize and get user ID when component mounts
   useEffect(() => {
-    // First try to get user email, which is the primary identifier
+    // Get user ID from localStorage
     const userEmail = localStorage.getItem('userEmail');
+    const storedUserId = localStorage.getItem('userId');
     
-    if (userEmail) {
-      // If we have an email, create a deterministic user ID from it
-      // This ensures the same email always generates the same ID
-      const emailBasedId = `user_${btoa(userEmail).replace(/[+/=]/g, '')}`;
-      localStorage.setItem('uid', emailBasedId);
-      setUserId(emailBasedId);
-      console.log('Using email-based user ID:', emailBasedId, 'for email:', userEmail);
-    } else {
-      // Fallback to existing ID or create new one if no email is found
-      let storedUserId = localStorage.getItem('uid');
-      
-      if (!storedUserId) {
-        // Create a unique ID combining timestamp and random string
-        const timestamp = new Date().getTime();
-        const randomStr = Math.random().toString(36).substring(2, 10);
-        storedUserId = `anonymous_${timestamp}_${randomStr}`;
-        
-        // Store the generated ID
-        localStorage.setItem('uid', storedUserId);
-        console.log('Generated anonymous user ID:', storedUserId);
-      } else if (!storedUserId.startsWith('user_') && !storedUserId.startsWith('anonymous_')) {
-        // If it's an old format ID, upgrade it to the new format
-        const newId = `anonymous_${storedUserId}`;
-        localStorage.setItem('uid', newId);
-        storedUserId = newId;
-        console.log('Upgraded legacy user ID to:', newId);
-      } else {
-        console.log('Using existing user ID:', storedUserId);
-      }
-      
+    if (storedUserId) {
+      // Use existing user ID from localStorage
       setUserId(storedUserId);
+      console.log('Using existing user ID:', storedUserId);
+    } else {
+      // If no ID, show a warning in the console
+      console.warn('No user ID found. User must sign in to track daily updates.');
+      
+      // You might want to show a toast or notification to the user
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to track your daily updates.",
+        variant: "destructive",
+      });
     }
     
     // Clear the component state when user email changes
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'userEmail') {
+      if (e.key === 'userEmail' || e.key === 'userId') {
         // User has logged in or out, need to refresh
         window.location.reload();
       }
