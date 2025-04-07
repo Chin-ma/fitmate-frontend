@@ -1,13 +1,9 @@
 import { OnboardingForm } from '@/components/onboarding/onboarding-form';
-import { Header } from '@/components/header';
 
 export default function OnboardingPage() {
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <main className="flex-1 bg-muted">
-        <OnboardingForm />
-      </main>
+    <div className="min-h-screen bg-gradient-to-b from-primary/5 to-muted flex items-center justify-center py-8 px-4">
+      <OnboardingForm />
     </div>
   );
 } 
