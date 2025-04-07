@@ -1,5 +1,5 @@
 import { Button } from './ui/button';
-import { Logo } from './logo';
+import Logo from './logo';
 import Link from 'next/link';
 
 export function Header() {
