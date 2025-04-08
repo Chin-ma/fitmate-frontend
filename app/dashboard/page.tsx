@@ -6,153 +6,244 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Camera, Activity, Apple, Dumbbell, Calendar, CheckCircle2, XCircle } from 'lucide-react';
-import Image from 'next/image';
 import { PostureCheck } from '@/components/posture-check/posture-check';
 import { toast } from '@/components/ui/use-toast';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-// Interface for the daily metrics
-interface DailyMetric {
-  workout_completed: boolean;
-  total_calories: number;
-  calorie_target: number;
-  date: string;
+// Interface for analytics data
+interface MacroData {
+  calories: number;
+  carbs: number;
+  fat: number;
+  protein: number;
+}
+
+interface DayData {
+  [key: string]: MacroData;
+}
+
+interface WorkoutDayData {
+  [key: string]: boolean;
+}
+
+interface UserData {
+  overall_callorie: DayData[];
+  has_gone_to_gym: WorkoutDayData[];
+  workout_completed?: boolean;
+  total_calories?: number;
+  calorie_target?: number;
+  date?: string;
+}
+
+// For chart data format
+interface ChartDataPoint {
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  workout: number;
 }
 
 export default function DashboardPage() {
   const [userId, setUserId] = useState<string | null>(null);
-  const [dailyMetrics, setDailyMetrics] = useState<DailyMetric | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
 
-  // Get user ID and fetch data on component mount
+  // Get user ID on component mount
   useEffect(() => {
-    // Get user ID
+    const storedUserId = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
-    if (userEmail) {
+    console.log('Stored userId:', storedUserId, 'userEmail:', userEmail);
+    
+    if (storedUserId) {
+      setUserId(storedUserId);
+    } else if (userEmail) {
       setUserId(userEmail);
     } else {
-      const storedUserId = localStorage.getItem('userId');
-      if (storedUserId) {
-        setUserId(storedUserId);
-      }
+      console.warn('No user ID found in localStorage');
+      toast({
+        title: "Authentication Error",
+        description: "Please log in to view your dashboard",
+        variant: "destructive"
+      });
     }
   }, []);
 
-  // Fetch daily metrics when userId changes
+  // Fetch all data when userId changes
   useEffect(() => {
     if (userId) {
-      fetchDailyMetrics();
+      fetchUserData();
     }
   }, [userId]);
 
-  // Function to fetch daily metrics from the backend
-  const fetchDailyMetrics = async () => {
+  // Function to fetch all user data from the backend
+  const fetchUserData = async () => {
     if (!userId) return;
     
     setIsLoading(true);
     
     try {
-      const currentDate = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+      const currentDate = new Date().toISOString().split('T')[0];
+      const url = `http://127.0.0.1:5000/api/user/get_user_overall_data?user_id=${userId}`;
+      console.log('Fetching from:', url);
       
-      const response = await fetch(`http://127.0.0.1:5000/api/daily/metrics?uid=${userId}&date=${currentDate}`);
-      
+      const response = await fetch(url);
       if (!response.ok) {
-        throw new Error('Failed to fetch daily metrics');
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch user data: ${response.status} - ${errorText}`);
       }
       
-      const data = await response.json();
+      const data: UserData = await response.json();
+      console.log('Received data:', data);
       
-      // Set metrics from backend or use default values
-      setDailyMetrics({
-        workout_completed: data.workout_completed || false,
-        total_calories: data.total_calories || 0,
-        calorie_target: data.calorie_target || 2200,
-        date: currentDate
-      });
+      setUserData(data);
+      processDataForCharts(data);
       
     } catch (error) {
-      console.error('Error fetching daily metrics:', error);
+      console.error('Error fetching user data:', error);
+      // Generate mock data for analytics
+      const mockCalorieData: DayData[] = [];
+      const mockWorkoutData: WorkoutDayData[] = [];
       
-      // Set default data if fetch fails
-      setDailyMetrics({
+      // Generate 7 days of mock data
+      for (let i = 0; i < 7; i++) {
+        const dayKey = `day${i + 1}`;
+        // Random calorie data between 1800-2500
+        mockCalorieData.push({
+          [dayKey]: {
+            calories: Math.floor(Math.random() * (2500 - 1800) + 1800),
+            protein: Math.floor(Math.random() * (180 - 120) + 120),
+            carbs: Math.floor(Math.random() * (300 - 200) + 200),
+            fat: Math.floor(Math.random() * (80 - 50) + 50)
+          }
+        });
+        // Random workout completion (true/false)
+        mockWorkoutData.push({
+          [dayKey]: Math.random() > 0.3 // 70% chance of completing workout
+        });
+      }
+
+      const defaultData: UserData = {
+        overall_callorie: mockCalorieData,
+        has_gone_to_gym: mockWorkoutData,
         workout_completed: false,
-        total_calories: 0,
+        total_calories: 1950,
         calorie_target: 2200,
         date: new Date().toISOString().split('T')[0]
-      });
+      };
+      setUserData(defaultData);
+      processDataForCharts(defaultData);
       
-      toast({
-        title: "Error loading metrics",
-        description: "Could not load today's fitness data. Using default values.",
-        variant: "destructive"
-      });
+      // toast({
+      //   title: "Using Sample Data",
+      //   description: "Showing mock data for demonstration purposes.",
+      //   variant: "default"
+      // });
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Process analytics data for chart display
+  const processDataForCharts = (data: UserData) => {
+    console.log('Processing chart data:', data);
+    
+    if (!data || !data.overall_callorie || !data.has_gone_to_gym) {
+      console.error('Missing required data for charts');
+      setChartData([]);
+      return;
+    }
+    
+    const chartPoints: ChartDataPoint[] = [];
+    
+    try {
+      for (let i = 0; i < data.overall_callorie.length; i++) {
+        const calorieDay = data.overall_callorie[i];
+        const workoutDay = i < data.has_gone_to_gym.length ? data.has_gone_to_gym[i] : { [`day${i+1}`]: false };
+        
+        const dayKey = Object.keys(calorieDay)[0];
+        if (!dayKey) continue;
+        
+        const macroData = calorieDay[dayKey];
+        if (!macroData) continue;
+        
+        let hasWorkedOut = false;
+        if (workoutDay[dayKey] !== undefined) {
+          hasWorkedOut = !!workoutDay[dayKey];
+        } else {
+          const dayNumber = dayKey.replace(/\D/g, '');
+          const alternateKeys = Object.keys(workoutDay);
+          for (const key of alternateKeys) {
+            if (key.includes(dayNumber)) {
+              hasWorkedOut = !!workoutDay[key];
+              break;
+            }
+          }
+        }
+        
+        const dayName = `Day ${dayKey.replace(/\D/g, '') || (i+1)}`;
+        
+        chartPoints.push({
+          name: dayName,
+          calories: macroData.calories || 0,
+          protein: macroData.protein || 0,
+          carbs: macroData.carbs || 0,
+          fat: macroData.fat || 0,
+          workout: hasWorkedOut ? 1 : 0
+        });
+      }
+      
+      console.log('Processed chart points:', chartPoints);
+      setChartData(chartPoints);
+    } catch (error) {
+      console.error('Error processing chart data:', error);
+      setChartData([]);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
-      {/* Header with Quick Actions */}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <div className="flex gap-4">
-          <Button variant="outline" onClick={fetchDailyMetrics} disabled={isLoading}>
+          <Button variant="outline" onClick={fetchUserData} disabled={isLoading}>
             {isLoading ? "Updating..." : "Refresh Data"}
           </Button>
           <Button>Start Workout</Button>
         </div>
       </div>
 
-      {/* Daily Status Overview */}
-      {dailyMetrics && (
+      {userData && (
         <Card className="bg-muted/40">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-full ${dailyMetrics.workout_completed ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>
-                  {dailyMetrics.workout_completed ? 
-                    <CheckCircle2 className="w-6 h-6" /> : 
-                    <XCircle className="w-6 h-6" />
-                  }
+                <div className={`p-2 rounded-full ${userData.workout_completed ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>
+                  {userData.workout_completed ? <CheckCircle2 className="w-6 h-6" /> : <XCircle className="w-6 h-6" />}
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Today's Workout</p>
-                  <p className="font-semibold">
-                    {dailyMetrics.workout_completed ? 
-                      "Completed" : 
-                      "Not yet completed"
-                    }
-                  </p>
+                  <p className="font-semibold">{userData.workout_completed ? "Completed" : "Not yet completed"}</p>
                 </div>
               </div>
-              
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-full bg-blue-100 text-blue-600">
                   <Apple className="w-6 h-6" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Calorie Intake</p>
-                  <p className="font-semibold">
-                    {dailyMetrics.total_calories} / {dailyMetrics.calorie_target} calories
-                  </p>
+                  <p className="font-semibold">{userData.total_calories} / {userData.calorie_target} calories</p>
                 </div>
                 <div className="w-24 md:w-32">
-                  <Progress 
-                    value={(dailyMetrics.total_calories / dailyMetrics.calorie_target) * 100} 
-                    className="h-2"
-                  />
+                  <Progress value={(userData.total_calories! / userData.calorie_target!) * 100} className="h-2" />
                 </div>
               </div>
-              
               <div className="text-right">
                 <p className="text-sm font-medium text-muted-foreground">Today's Date</p>
                 <p className="font-semibold">
-                  {new Date().toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric', 
-                    month: 'short', 
-                    day: 'numeric'
-                  })}
+                  {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' })}
                 </p>
               </div>
             </div>
@@ -160,11 +251,10 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <SummaryCard 
           title="Daily Calories" 
-          value={dailyMetrics ? `${dailyMetrics.total_calories} / ${dailyMetrics.calorie_target}` : "- / -"} 
+          value={userData ? `${userData.total_calories} / ${userData.calorie_target}` : "- / -"} 
           icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>}
         />
         <SummaryCard 
@@ -174,7 +264,7 @@ export default function DashboardPage() {
         />
         <SummaryCard 
           title="Today's Workout" 
-          value={dailyMetrics ? (dailyMetrics.workout_completed ? "Completed" : "Not Started") : "Unknown"}
+          value={userData ? (userData.workout_completed ? "Completed" : "Not Started") : "Unknown"}
           icon={<Dumbbell className="w-5 h-5" />}
         />
         <SummaryCard 
@@ -189,7 +279,6 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Main Content Tabs */}
       <Tabs defaultValue="diet" className="space-y-4">
         <TabsList className="grid grid-cols-6 gap-4">
           <TabsTrigger value="diet">Diet Plan</TabsTrigger>
@@ -200,7 +289,6 @@ export default function DashboardPage() {
           <TabsTrigger value="posture">Posture Check</TabsTrigger>
         </TabsList>
 
-        {/* Diet Plan Tab */}
         <TabsContent value="diet" className="space-y-4">
           <Card>
             <CardHeader>
@@ -209,20 +297,15 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <MealSection title="Breakfast" calories="450" time="8:00 AM" 
-                  items={["Oatmeal with berries", "Greek yogurt", "Almonds"]} />
-                <MealSection title="Lunch" calories="650" time="1:00 PM" 
-                  items={["Grilled chicken breast", "Quinoa", "Steamed vegetables"]} />
-                <MealSection title="Dinner" calories="550" time="7:00 PM" 
-                  items={["Salmon fillet", "Brown rice", "Roasted broccoli"]} />
-                <MealSection title="Snacks" calories="300" time="Various" 
-                  items={["Apple with peanut butter", "Protein shake"]} />
+                <MealSection title="Breakfast" calories="450" time="8:00 AM" items={["Oatmeal with berries", "Greek yogurt", "Almonds"]} />
+                <MealSection title="Lunch" calories="650" time="1:00 PM" items={["Grilled chicken breast", "Quinoa", "Steamed vegetables"]} />
+                <MealSection title="Dinner" calories="550" time="7:00 PM" items={["Salmon fillet", "Brown rice", "Roasted broccoli"]} />
+                <MealSection title="Snacks" calories="300" time="Various" items={["Apple with peanut butter", "Protein shake"]} />
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Exercise Plan Tab */}
         <TabsContent value="exercise" className="space-y-4">
           <Card>
             <CardHeader>
@@ -231,20 +314,15 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <WorkoutDay day="Monday" type="Upper Body Strength" duration="45 min" 
-                  exercises={["Push-ups 3×12", "Dumbbell Rows 3×10", "Shoulder Press 3×10"]} />
-                <WorkoutDay day="Tuesday" type="Cardio" duration="30 min" 
-                  exercises={["Running", "HIIT intervals", "Cool-down stretches"]} />
-                <WorkoutDay day="Wednesday" type="Lower Body" duration="50 min" 
-                  exercises={["Squats 3×15", "Lunges 3×12", "Deadlifts 3×10"]} />
-                <WorkoutDay day="Friday" type="Full Body" duration="60 min" 
-                  exercises={["Circuit training", "Core workout", "Flexibility"]} />
+                <WorkoutDay day="Monday" type="Upper Body Strength" duration="45 min" exercises={["Push-ups 3×12", "Dumbbell Rows 3×10", "Shoulder Press 3×10"]} />
+                <WorkoutDay day="Tuesday" type="Cardio" duration="30 min" exercises={["Running", "HIIT intervals", "Cool-down stretches"]} />
+                <WorkoutDay day="Wednesday" type="Lower Body" duration="50 min" exercises={["Squats 3×15", "Lunges 3×12", "Deadlifts 3×10"]} />
+                <WorkoutDay day="Friday" type="Full Body" duration="60 min" exercises={["Circuit training", "Core workout", "Flexibility"]} />
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Progress Update Tab */}
         <TabsContent value="progress" className="space-y-4">
           <Card>
             <CardHeader>
@@ -253,12 +331,11 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {/* Today's Workout Status */}
                 <div className="p-4 rounded-lg border">
                   <h3 className="font-medium mb-3">Today's Workout Status</h3>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      {dailyMetrics?.workout_completed ? (
+                      {userData?.workout_completed ? (
                         <>
                           <CheckCircle2 className="text-green-500 h-5 w-5" />
                           <span className="text-green-600 font-medium">Workout Completed</span>
@@ -270,51 +347,30 @@ export default function DashboardPage() {
                         </>
                       )}
                     </div>
-                    {!dailyMetrics?.workout_completed && (
+                    {!userData?.workout_completed && (
                       <Button 
                         size="sm" 
                         onClick={async () => {
                           if (!userId) {
-                            toast({
-                              title: "User Data Error",
-                              description: "Unable to identify user. Please refresh the page.",
-                              variant: "destructive"
-                            });
+                            toast({ title: "User Data Error", description: "Unable to identify user.", variant: "destructive" });
                             return;
                           }
-                          
                           try {
                             const response = await fetch('http://127.0.0.1:5000/api/daily/update_workout', {
                               method: 'POST',
-                              headers: {
-                                'Content-Type': 'application/json',
-                              },
+                              headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({
                                 uid: userId,
                                 date: new Date().toISOString().split('T')[0],
                                 workout_completed: true
                               }),
                             });
-                            
-                            if (!response.ok) {
-                              throw new Error('Failed to update workout status');
-                            }
-                            
-                            toast({
-                              title: "Workout Completed",
-                              description: "Your workout has been marked as completed for today!",
-                            });
-                            
-                            // Refresh the data
-                            fetchDailyMetrics();
-                            
+                            if (!response.ok) throw new Error('Failed to update workout status');
+                            toast({ title: "Workout Completed", description: "Workout marked as completed!" });
+                            fetchUserData();
                           } catch (error) {
-                            console.error('Error updating workout status:', error);
-                            toast({
-                              title: "Update Failed",
-                              description: "There was a problem updating your workout status.",
-                              variant: "destructive"
-                            });
+                            console.error('Error updating workout:', error);
+                            toast({ title: "Update Failed", description: "Problem updating workout status.", variant: "destructive" });
                           }
                         }}
                       >
@@ -323,7 +379,6 @@ export default function DashboardPage() {
                     )}
                   </div>
                 </div>
-                
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="font-medium">Weight Goal</span>
@@ -353,7 +408,6 @@ export default function DashboardPage() {
           </Card>
         </TabsContent>
 
-        {/* Calorie Tracking Tab */}
         <TabsContent value="calories" className="space-y-4">
           <Card>
             <CardHeader>
@@ -364,17 +418,10 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-lg font-semibold">
-                      Daily Target: {dailyMetrics ? dailyMetrics.calorie_target : 2200} cal
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Consumed: {dailyMetrics ? dailyMetrics.total_calories : 0} cal
-                    </p>
+                    <p className="text-lg font-semibold">Daily Target: {userData?.calorie_target || 2200} cal</p>
+                    <p className="text-sm text-muted-foreground">Consumed: {userData?.total_calories || 0} cal</p>
                   </div>
-                  <Progress 
-                    value={dailyMetrics ? (dailyMetrics.total_calories / dailyMetrics.calorie_target) * 100 : 0} 
-                    className="w-1/2 h-2" 
-                  />
+                  <Progress value={userData ? (userData.total_calories! / userData.calorie_target!) * 100 : 0} className="w-1/2 h-2" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <MacroCard title="Protein" value="120g" target="140g" />
@@ -390,7 +437,6 @@ export default function DashboardPage() {
           </Card>
         </TabsContent>
 
-        {/* Analytics Tab */}
         <TabsContent value="analytics" className="space-y-4">
           <Card>
             <CardHeader>
@@ -399,24 +445,80 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-8">
-                <div className="h-[200px]">
-                  <p className="font-medium mb-2">Calorie Graph</p>
-                  {/* calorie graph would go here */}
+                <div className="flex justify-end mb-4">
+                  <Button variant="outline" size="sm" onClick={fetchUserData} disabled={isLoading}>
+                    {isLoading ? "Loading..." : "Refresh Analytics"}
+                  </Button>
                 </div>
-                <div className="h-[200px]">
-                  <p className="font-medium mb-2">Exercise Graph</p>
-                  {/* exercise graph would go here */}
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <StatCard title="Workouts This Month" value="12" change="+20%" />
-                  <StatCard title="Average Workout Duration" value="45 min" change="+5%" />
-                </div>
+                {chartData.length === 0 ? (
+                  <div className="h-[200px] flex items-center justify-center border rounded-lg bg-muted/20">
+                    <div className="text-center">
+                      <p className="text-muted-foreground">No analytics data available</p>
+                      <Button variant="outline" size="sm" className="mt-4" onClick={fetchUserData}>Refresh Data</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="h-[200px]">
+                      <p className="font-medium mb-2">Calorie Graph</p>
+                      <ResponsiveContainer width="100%" height={200}>
+                        <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" tickFormatter={(str) => str.split(' ')[0]} />
+                          <YAxis />
+                          <Tooltip formatter={(value) => `${value} calories`} />
+                          <Legend />
+                          <Line type="monotone" dataKey="calories" stroke="#8884d8" activeDot={{ r: 8 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="h-[200px]">
+                      <p className="font-medium mb-2">Exercise Graph</p>
+                      <ResponsiveContainer width="100%" height={200}>
+                        <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" tickFormatter={(str) => str.split(' ')[0]} />
+                          <YAxis />
+                          <Tooltip formatter={(value) => value === 1 ? 'Completed' : 'Not Completed'} />
+                          <Legend />
+                          <Line type="monotone" dataKey="workout" stroke="#82ca9d" activeDot={{ r: 8 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="h-[200px]">
+                      <p className="font-medium mb-2">Macronutrients</p>
+                      <ResponsiveContainer width="100%" height={200}>
+                        <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" tickFormatter={(str) => str.split(' ')[0]} />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Line type="monotone" dataKey="protein" stroke="#8884d8" />
+                          <Line type="monotone" dataKey="carbs" stroke="#82ca9d" />
+                          <Line type="monotone" dataKey="fat" stroke="#ffc658" />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <StatCard 
+                        title="Avg. Daily Calories" 
+                        value={chartData.length > 0 ? `${Math.round(chartData.reduce((sum, point) => sum + point.calories, 0) / chartData.length)}` : "0"} 
+                        change={chartData.length > 1 && chartData[chartData.length - 1].calories > chartData[chartData.length - 2].calories ? "+↑" : "-↓"} 
+                      />
+                      <StatCard 
+                        title="Workout Completion" 
+                        value={chartData.length > 0 ? `${Math.round((chartData.filter(day => day.workout === 1).length / chartData.length) * 100)}%` : "0%"} 
+                        change={chartData.length > 0 && chartData[chartData.length - 1].workout === 1 ? "+↑" : "-↓"} 
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Posture Check Tab */}
         <TabsContent value="posture" className="space-y-4">
           <Card>
             <CardHeader>
@@ -548,4 +650,4 @@ function StatCard({ title, value, change }: StatCardProps) {
       </p>
     </div>
   );
-} 
+}

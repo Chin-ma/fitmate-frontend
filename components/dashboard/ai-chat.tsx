@@ -24,7 +24,7 @@ export function AIChat() {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!inputValue.trim()) return;
@@ -41,28 +41,43 @@ export function AIChat() {
     setInputValue('');
     setIsLoading(true);
     
-    // Simulate AI response after a delay
-    setTimeout(() => {
-      const aiResponses = [
-        "That's a great question! Based on your current fitness level, I'd recommend focusing on progressive overload for your strength training.",
-        "I've analyzed your recent workouts, and I see room for improvement in your recovery time. Make sure you're getting enough sleep.",
-        "Your progress has been impressive! I've updated your workout plan to include more challenging exercises.",
-        "For your goal of weight loss, I suggest adding 2 HIIT sessions per week alongside your strength training.",
-        "Let's adjust your workout schedule to better fit your availability. How about 3 workouts during the week and 1 on the weekend?",
-      ];
-      
-      const randomResponse = aiResponses[Math.floor(Math.random() * aiResponses.length)];
+    try {
+      // Call Gemini API through our backend route
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: inputValue }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get AI response');
+      }
+
+      const data = await response.json();
       
       const newAIMessage: Message = {
         id: Date.now(),
-        content: randomResponse,
+        content: data.response,
         sender: 'ai',
         timestamp: new Date(),
       };
       
       setMessages((prev) => [...prev, newAIMessage]);
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      // Add error message to chat
+      const errorMessage: Message = {
+        id: Date.now(),
+        content: "I apologize, but I'm having trouble responding right now. Please try again later.",
+        sender: 'ai',
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   return (
