@@ -94,7 +94,7 @@ export function Sidebar() {
               </svg>
             }
           />
-          <SidebarItem
+          {/* <SidebarItem
             href="/dashboard/exercises/custom"
             label="Custom Plan"
             icon={
@@ -134,7 +134,7 @@ export function Sidebar() {
                 <path d="m19 9-5 5-4-4-3 3" />
               </svg>
             }
-          />
+          /> */}
 
           <div className="mt-6">
             <h2 className="px-2 text-lg font-semibold tracking-tight">
@@ -163,7 +163,7 @@ export function Sidebar() {
               </svg>
             }
           />
-          <SidebarItem
+          {/* <SidebarItem
             href="/dashboard/goals"
             label="Goals"
             icon={
@@ -183,7 +183,7 @@ export function Sidebar() {
                 <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
               </svg>
             }
-          />
+          /> */}
           <SidebarItem
             href="/dashboard/chat"
             label="AI Coach"
@@ -205,7 +205,7 @@ export function Sidebar() {
             }
           />
 
-          <div className="mt-6">
+          {/* <div className="mt-6">
             <h2 className="px-2 text-lg font-semibold tracking-tight">
               Settings
             </h2>
@@ -251,7 +251,7 @@ export function Sidebar() {
                 <circle cx="12" cy="12" r="3" />
               </svg>
             }
-          />
+          /> */}
 
           <div className="mt-6">
             <h2 className="px-2 text-lg font-semibold tracking-tight">
@@ -282,7 +282,7 @@ export function Sidebar() {
               </svg>
             }
           />
-          <SidebarItem
+          {/* <SidebarItem
             href="/dashboard/exercises/progress"
             label="Progress Tracking"
             icon={
@@ -302,7 +302,7 @@ export function Sidebar() {
                 <path d="m19 9-5 5-4-4-3 3" />
               </svg>
             }
-          />
+          /> */}
         </nav>
       </div>
       <div className="border-t p-6">
